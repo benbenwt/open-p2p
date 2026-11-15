@@ -1,0 +1,26 @@
+__pycache__
+wandb/
+.pytest_cache/
+.venv
+.ruff_cache
+.DS_Store
+.sesskey
+logs.txt
+logs/
+yt_videos/
+target
+data_folder/
+data_folder_validation/
+
+# 模型权重与训练产物（体积过大，不入库）
+*.ckpt
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.onnx
+
+# 下载的数据集与缓存（体积过大，不入库）
+dataset/dataset/
+dataset/.cache/
+150M/checkpoint*

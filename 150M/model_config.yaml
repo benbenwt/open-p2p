@@ -1,0 +1,410 @@
+idm_model:
+  action_decoder:
+    embed_dim: 256
+    n_kv_head: 8
+    n_q_head: 8
+    n_transformer_layers: 3
+  attention_history_len:
+  - 100
+  - 100
+  - 100
+  - 100
+  mask_block_size: null
+  model_type: dense
+  n_kv_head: 8
+  n_kv_sink_tokens: 1
+  n_q_head: 8
+  n_thinking_tokens: 1
+  n_transformer_layers: 4
+  sparse_moe:
+    experts_per_token: 4
+    lb_loss_weight: 0.01
+    num_experts: 16
+    rz_loss_weight: 0.001
+  top_p: null
+  transformer_dim: 128
+  z_loss_weight: 0.0001
+inference:
+  checkpoint_path: null
+  mouse_sampling_approach: truncated_normal
+  sampling_temperature: 1.0
+launch_all:
+  env: []
+  job_name: 150M_1e_4_100_1e_4-20251110232512-all
+  run_cmd: uv run python elefant/lapo/train.py --stage all 
+    --config={config_path}
+  vm_flavor: n3-H100x8-NVLink
+launch_stage23:
+  env: []
+  job_name: 150M_1e_4_100_1e_4-20251110232512-stage23
+  run_cmd: uv run python elefant/lapo/train.py --stage stage23 
+    --config={config_path}
+  vm_flavor: n3-H100x8-NVLink
+policy_model:
+  action_decoder:
+    embed_dim: 1024
+    n_kv_head: 8
+    n_q_head: 8
+    n_transformer_layers: 3
+  attention_history_len:
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  - 200
+  mask_block_size: 128
+  model_type: dense
+  n_kv_head: 16
+  n_kv_sink_tokens: 0
+  n_q_head: 16
+  n_thinking_tokens: 1
+  n_transformer_layers: 10
+  sparse_moe:
+    experts_per_token: 4
+    lb_loss_weight: 0.01
+    num_experts: 16
+    rz_loss_weight: 0.001
+  top_p: null
+  transformer_dim: 1024
+  z_loss_weight: 0.0001
+shared:
+  action_mapping:
+    max_keys: 4
+    max_mouse_keys: 2
+  fast_dev_run: false
+  frame_height: 192
+  frame_width: 192
+  n_seq_timesteps: 200
+  output_path: yueyugua/lapo/dev/1/20251110232512/150M_1e_4_100_1e_4
+  precision: bf16-mixed
+  text_tokenizer_config:
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    text_embedding_shape:
+    - 1
+    - 768
+    text_tokenizer_name: gemma
+  tokenizer:
+    conv_tokenizer_config:
+      num_tokens: 1
+    magavit_v2_tokenizer_config:
+      checkpoint_path: 
+        /data/magvit/checkpoints/roblox-all-elefant-run6/epoch=0-step=23000.ckpt
+      compression_rate: 8
+      config_path: 
+        /root/ml-playground/3rdparty/SEED-Voken/configs/Open-MAGVIT2/gpu/roblox_all_elefant_run6.yaml
+    type: conv
+    vit_tokenizer_config:
+      patch_size: 16
+stage1_idm:
+  accumulate_grad_batches: 1
+  launch:
+    env: []
+    job_name: 150M_1e_4_100_1e_4-20251110232512-st1
+    run_cmd: uv run python elefant/lapo/train.py --stage stage1_idm 
+      --config={config_path}
+    vm_flavor: n3-H100x8-NVLink
+  n_training_steps: 1000
+  n_validation_steps: 10
+  optim:
+    beta_1: 0.95
+    beta_2: 0.999
+    learning_rate: 0.0003
+    weight_decay: 0.01
+  save_every_n_steps: 1000
+  training_dataset:
+    always_labelled: false
+    batch_size: 128
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 1
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 8
+    n_preprocess_threads_per_gpu: 16
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 4096
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 16
+    sql_query: SELECT filepath FROM video_dataset_metadata
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    warn_on_starvation: false
+  validation_datasets: []
+  validation_step_interval: 100
+stage2_pretrain:
+  accumulate_grad_batches: 1
+  freeze_transformer_layers_for_steps: 0
+  launch:
+    env: []
+    job_name: lapo3-labelled-bc
+    run_cmd: uv run python elefant/lapo/train.py --stage 
+      stage2_pretrain_with_idm --config={config_path}
+    vm_flavor: n3-H100x1
+  n_training_steps: 100000
+  n_validation_steps: 10
+  optim:
+    beta_1: 0.95
+    beta_2: 0.999
+    learning_rate: 0.0003
+    weight_decay: 0.01
+  save_every_n_steps: 1000
+  supervised_idm_model_path: null
+  training_dataset:
+    always_labelled: false
+    batch_size: 128
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 1
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 8
+    n_preprocess_threads_per_gpu: 16
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 4096
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 16
+    sql_query: SELECT filepath FROM video_dataset_metadata
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    warn_on_starvation: false
+  validation_datasets: []
+  validation_step_interval: 100
+stage3_finetune:
+  accumulate_grad_batches: 1
+  freeze_transformer_layers_for_steps: 0
+  init:
+    random: true
+    stage2_model_path: null
+    stage3_model_path: null
+  launch:
+    env: []
+    job_name: 150M_1e_4_100_1e_4-20251110232512-st3
+    run_cmd: uv run python elefant/lapo/train.py --stage stage3_finetune 
+      --config={config_path}
+    vm_flavor: n3-H100x8-NVLink
+  n_training_steps: 500000
+  n_validation_steps: 200
+  optim:
+    beta_1: 0.9
+    beta_2: 0.999
+    learning_rate: 0.0001
+    weight_decay: 0.0001
+  save_every_n_steps: 10000
+  training_dataset:
+    always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 16
+    downloaded_files_queue_size_per_gpu: 8
+    n_parallel_downloads_per_gpu: 16
+    n_preprocess_threads_per_gpu: 32
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 2
+    rand_augmentation:
+      fraction_augmented: 1.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1900
+    shuffled_chunks_queue_size_per_gpu: 16
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.0 AND filepath_random_num
+      < 0.95\nAND \"user\" NOT IN ('charlie_morry', 'Irakli')\nAND timestamp <= epoch(strptime('2025-11-01',
+      '%Y-%m-%d')) * 1000;\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    warn_on_starvation: false
+  validation_datasets:
+  - always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 8
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 1
+    n_preprocess_threads_per_gpu: 8
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 1
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 1
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.95 AND filepath_random_num
+      < 1.0\nAND env_name = 'elefant-test' AND env_sub_type = 'hovercraft'\nAND timestamp
+      <= epoch(strptime('2025-11-01', '%Y-%m-%d')) * 1000\nORDER BY filepath_random_num
+      ASC\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    validation_name: elefant-test-racing
+    warn_on_starvation: false
+  - always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 8
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 1
+    n_preprocess_threads_per_gpu: 8
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 1
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 1
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.95 AND filepath_random_num
+      < 1.0\nAND env_name = 'elefant-test' AND (env_sub_type = 'basic-fps' OR env_sub_type
+      = 'fps-basic')\nORDER BY filepath_random_num ASC\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    validation_name: elefant-test-fps
+    warn_on_starvation: false
+  - always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 8
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 1
+    n_preprocess_threads_per_gpu: 8
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 1
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 1
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.95 AND filepath_random_num
+      < 1.0\nAND env_name = 'roblox' AND (env_sub_type = 'blade-ball' OR env_sub_type
+      = 'blade ball')\nAND timestamp <= epoch(strptime('2025-11-01', '%Y-%m-%d'))
+      * 1000\nORDER BY filepath_random_num ASC\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    validation_name: blade-ball
+    warn_on_starvation: false
+  - always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 8
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 1
+    n_preprocess_threads_per_gpu: 8
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 1
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 1
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.95 AND filepath_random_num
+      < 1.0\nAND ((env_name = 'msdos' AND env_sub_type = 'quake')\n  OR (env_name
+      = 'quake')\n  OR (env_name = 'quake2')\n  OR (env_name = 'doom')\n  OR (env_name
+      = 'call-of-duty-mobile')\n  OR (env_name LIKE '%left-4%'))\nAND timestamp <=
+      epoch(strptime('2025-11-01', '%Y-%m-%d')) * 1000\nORDER BY filepath_random_num
+      ASC\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    validation_name: simple-fps
+    warn_on_starvation: false
+  - always_labelled: true
+    batch_size: 10
+    dataset_worker_num_workers_per_gpu: 1
+    dataset_worker_prefetch_factor: 8
+    downloaded_files_queue_size_per_gpu: 16
+    n_parallel_downloads_per_gpu: 1
+    n_preprocess_threads_per_gpu: 8
+    n_seq_timesteps: 3
+    preprocessed_chunks_queue_size_per_gpu: 1
+    rand_augmentation:
+      fraction_augmented: 0.0
+    shuffle: true
+    shuffle_buffer_size_per_gpu: 1024
+    shuffled_chunks_queue_size_per_gpu: 1
+    sql_query: "SELECT filepath FROM video_dataset_metadata\nWHERE \n(\nfilepath LIKE
+      'employee_labelled/%'\n)\nAND filepath_random_num >= 0.95 AND filepath_random_num
+      < 1.0\nAND \"user\" NOT IN ('charlie_morry', 'Irakli')\nAND timestamp <= epoch(strptime('2025-11-01',
+      '%Y-%m-%d')) * 1000\nORDER BY filepath_random_num ASC\n"
+    text_annotation_model_version:
+    - gemini-2.5-flash
+    - gemini-2.5-flash-thinking-0905
+    tokenizer:
+      conv_tokenizer_config:
+        num_tokens: 1
+      magavit_v2_tokenizer_config: null
+      type: vit
+      vit_tokenizer_config:
+        patch_size: 16
+    validation_name: overall
+    warn_on_starvation: false
+  validation_step_interval: 200000000
+wandb:
+  enabled: true
+  exp_name: 150M_1e_4_100_1e_4-20251110232512
+  project: scaling-law
+  run_id: dh3pvqmm
+  tags: []
